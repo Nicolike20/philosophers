@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:32:02 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/18 20:02:41 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/20 18:51:24 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,12 @@
 
 typedef struct s_philo
 {
-	int		philo_n;
+	int		philo_num;
+	int		fork_num;
+	int		die_time;
+	int		eat_time;
+	int		sleep_time;
+	int		it_num;
 }t_philo;
 
 #endif

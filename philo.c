@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:31:28 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/19 18:26:11 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/20 19:26:21 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,19 +74,32 @@ int	check_args(char **argv)
 
 void	philo_init(int argc, char **argv, t_philo *vars)
 {
-	argc = 0; //quitar, solo para compilar con flags;
-	vars->philo_n = ft_atoi(argv[1]); //TODO: CAMBIAR A FT_ATOI
+	vars->philo_num = ft_atoi(argv[1]);
+	vars->fork_num = vars->philo_num;
+	vars->die_time = ft_atoi(argv[2]);
+	vars->eat_time = ft_atoi(argv[3]);
+	vars->sleep_time = ft_atoi(argv[4]);
+	if (argc == 6)
+		vars->it_num = ft_atoi(argv[5]);
+	else
+		vars->it_num = -1;
+}
+
+void	philo(t_philo *vars)
+{
+
 }
 
 int	main(int argc, char **argv)
 {
-	t_philo vars;
+	t_philo	vars;
 	if (argc == 5 || argc == 6)
 	{
 		if (check_args(argv)) //check que no sean negativos;
 			fail(1);
 		philo_init(argc, argv, &vars);
-		printf("Todo bien\n");
+		printf("test\nPhilonum: %d\nforknum: %d\ndietime: %d\neattime: %d\nsleeptime: %d\nitnum: %d\n", vars.philo_num, vars.fork_num, vars.die_time, vars.eat_time, vars.sleep_time, vars.it_num);
+		philo(&vars);
 	}
 	else
 		fail(1);
