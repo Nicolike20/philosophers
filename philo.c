@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:31:28 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/20 19:26:21 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/21 18:44:36 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,8 +72,23 @@ int	check_args(char **argv)
 	return (0);
 }
 
-void	philo_init(int argc, char **argv, t_philo *vars)
+void	philo_init(t_table *vars)
 {
+	int	i;
+
+	i = -1;
+	while (++i < vars->philo_num)
+	{
+		vars->philo[i].index = i + 1;
+		pthread_mutex_init(&vars->philo[i].fork, NULL);
+		vars->philo[i].table = vars;
+	}
+}
+
+void	mesa_init(int argc, char **argv, t_table *vars)
+{
+	t_philo	*philo;
+
 	vars->philo_num = ft_atoi(argv[1]);
 	vars->fork_num = vars->philo_num;
 	vars->die_time = ft_atoi(argv[2]);
@@ -83,21 +98,26 @@ void	philo_init(int argc, char **argv, t_philo *vars)
 		vars->it_num = ft_atoi(argv[5]);
 	else
 		vars->it_num = -1;
+	philo = malloc(sizeof(t_philo) * vars->philo_num);
+	if (philo == NULL)
+		fail(0);
+	vars->philo = philo;
+	philo_init(vars);
 }
 
-void	philo(t_philo *vars)
+void	philo(t_table *vars)
 {
-
+	vars = NULL; //solo para flags;
 }
 
 int	main(int argc, char **argv)
 {
-	t_philo	vars;
+	t_table	vars;
 	if (argc == 5 || argc == 6)
 	{
 		if (check_args(argv)) //check que no sean negativos;
 			fail(1);
-		philo_init(argc, argv, &vars);
+		mesa_init(argc, argv, &vars);
 		printf("test\nPhilonum: %d\nforknum: %d\ndietime: %d\neattime: %d\nsleeptime: %d\nitnum: %d\n", vars.philo_num, vars.fork_num, vars.die_time, vars.eat_time, vars.sleep_time, vars.it_num);
 		philo(&vars);
 	}
