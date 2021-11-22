@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:32:02 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/21 18:18:31 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/22 18:04:52 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,12 +16,15 @@
 # include <stdio.h>
 # include <unistd.h>
 # include <pthread.h>
+# include <sys/time.h>
 
 typedef struct s_philo
 {
 	pthread_t		id;
 	int				index;
 	pthread_mutex_t	fork;
+	size_t	time;
+	struct s_philo	*right;
 	struct s_table	*table;
 }t_philo;
 

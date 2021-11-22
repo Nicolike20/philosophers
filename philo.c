@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:31:28 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/21 18:44:36 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/22 18:40:45 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,15 @@ int	check_args(char **argv)
 	return (0);
 }
 
+size_t	get_time(void)
+{
+	struct timeval	tp;
+	struct timezone	tzp;
+
+	gettimeofday(&tp, &tzp);
+	return ((tp.tv_sec * 1000) + (tp.tv_usec / 1000));
+}
+
 void	philo_init(t_table *vars)
 {
 	int	i;
@@ -81,8 +90,12 @@ void	philo_init(t_table *vars)
 	{
 		vars->philo[i].index = i + 1;
 		pthread_mutex_init(&vars->philo[i].fork, NULL);
+		//gettimeofday(&vars->philo[i].time, NULL);
+		vars->philo[i].time = get_time();
 		vars->philo[i].table = vars;
+		vars->philo[i].right = &vars->philo[i + 1];
 	}
+	vars->philo[i - 1].right = &vars->philo[0];
 }
 
 void	mesa_init(int argc, char **argv, t_table *vars)
@@ -105,9 +118,34 @@ void	mesa_init(int argc, char **argv, t_table *vars)
 	philo_init(vars);
 }
 
-void	philo(t_table *vars)
+void	*philo(void *test)
 {
-	vars = NULL; //solo para flags;
+	t_philo	*philo;
+
+	philo = (t_philo *)test;
+	if (philo->index % 2 != 0)
+		usleep(1000);
+	printf("test: %d\n", philo->index);
+	//printf("test table: %d\n", philo->table->philo_num);
+	//printf("test right: %d\n", philo->right->index);
+	printf("test time %d: %d\n", philo->index, (int)philo->time);
+	return (NULL);
+}
+
+void	create_threads(t_table *vars)
+{
+	int	i;
+
+	i = -1;
+	while (++i < vars->philo_num)
+	{
+		pthread_create(&vars->philo[i].id, NULL, philo, &vars->philo[i]);
+	}
+	i = -1;
+	while (++i < vars->philo_num)
+	{
+		pthread_join(vars->philo[i].id, NULL);
+	}
 }
 
 int	main(int argc, char **argv)
@@ -119,7 +157,7 @@ int	main(int argc, char **argv)
 			fail(1);
 		mesa_init(argc, argv, &vars);
 		printf("test\nPhilonum: %d\nforknum: %d\ndietime: %d\neattime: %d\nsleeptime: %d\nitnum: %d\n", vars.philo_num, vars.fork_num, vars.die_time, vars.eat_time, vars.sleep_time, vars.it_num);
-		philo(&vars);
+		create_threads(&vars);
 	}
 	else
 		fail(1);
