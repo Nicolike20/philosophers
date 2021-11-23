@@ -23,7 +23,7 @@ typedef struct s_philo
 	pthread_t		id;
 	int				index;
 	pthread_mutex_t	fork;
-	size_t	time;
+	size_t	init_time;
 	struct s_philo	*right;
 	struct s_table	*table;
 }t_philo;

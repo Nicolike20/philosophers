@@ -75,9 +75,8 @@ int	check_args(char **argv)
 size_t	get_time(void)
 {
 	struct timeval	tp;
-	struct timezone	tzp;
 
-	gettimeofday(&tp, &tzp);
+	gettimeofday(&tp, NULL);
 	return ((tp.tv_sec * 1000) + (tp.tv_usec / 1000));
 }
 
@@ -91,7 +90,7 @@ void	philo_init(t_table *vars)
 		vars->philo[i].index = i + 1;
 		pthread_mutex_init(&vars->philo[i].fork, NULL);
 		//gettimeofday(&vars->philo[i].time, NULL);
-		vars->philo[i].time = get_time();
+		vars->philo[i].init_time = get_time();
 		vars->philo[i].table = vars;
 		vars->philo[i].right = &vars->philo[i + 1];
 	}
@@ -126,9 +125,15 @@ void	*philo(void *test)
 	if (philo->index % 2 != 0)
 		usleep(1000);
 	printf("test: %d\n", philo->index);
+	pthread_mutex_lock(&philo->fork);
+	printf("Philo %d ha cogido un tenedor\n", philo->index);
+	pthread_mutex_lock(&philo->right->fork);
+	printf("Philo %d ha cogido un tenedor\n", philo->index);
+	pthread_mutex_unlock(&philo->fork);
+	pthread_mutex_unlock(&philo->right->fork);
 	//printf("test table: %d\n", philo->table->philo_num);
 	//printf("test right: %d\n", philo->right->index);
-	printf("test time %d: %d\n", philo->index, (int)philo->time);
+	//printf("test time %d: %d\n", philo->index, (int)philo->time);
 	return (NULL);
 }
 
