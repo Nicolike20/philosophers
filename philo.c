@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:31:28 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/22 18:40:45 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/23 18:27:17 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,6 +91,8 @@ void	philo_init(t_table *vars)
 		pthread_mutex_init(&vars->philo[i].fork, NULL);
 		//gettimeofday(&vars->philo[i].time, NULL);
 		vars->philo[i].init_time = get_time();
+		vars->philo[i].current_time = get_time();
+		vars->philo[i].last_eat = get_time();
 		vars->philo[i].table = vars;
 		vars->philo[i].right = &vars->philo[i + 1];
 	}
@@ -110,6 +112,7 @@ void	mesa_init(int argc, char **argv, t_table *vars)
 		vars->it_num = ft_atoi(argv[5]);
 	else
 		vars->it_num = -1;
+	vars->dead_philo = 0;
 	philo = malloc(sizeof(t_philo) * vars->philo_num);
 	if (philo == NULL)
 		fail(0);
@@ -117,23 +120,45 @@ void	mesa_init(int argc, char **argv, t_table *vars)
 	philo_init(vars);
 }
 
+int	philo_is_dead(t_philo *philo, t_table *vars)
+{
+	if ((int)((get_time() - philo->init_time) - (philo->last_eat - philo->init_time)) > philo->table->die_time) //quitar los philo->init_time ?
+	{
+		vars->dead_philo = 1;
+		return (1);
+	}
+	return (0);
+}
+
 void	*philo(void *test)
 {
 	t_philo	*philo;
 
 	philo = (t_philo *)test;
-	if (philo->index % 2 != 0)
-		usleep(1000);
-	printf("test: %d\n", philo->index);
-	pthread_mutex_lock(&philo->fork);
-	printf("Philo %d ha cogido un tenedor\n", philo->index);
-	pthread_mutex_lock(&philo->right->fork);
-	printf("Philo %d ha cogido un tenedor\n", philo->index);
-	pthread_mutex_unlock(&philo->fork);
-	pthread_mutex_unlock(&philo->right->fork);
-	//printf("test table: %d\n", philo->table->philo_num);
-	//printf("test right: %d\n", philo->right->index);
-	//printf("test time %d: %d\n", philo->index, (int)philo->time);
+	while (philo->table->dead_philo == 0) //!philo_is_dead(philo, philo->table) //philo->table->dead_philo == 0
+	{
+		if (philo->index % 2 != 0)
+			usleep(1000);
+		//printf("test: %d\n", philo->index);
+		pthread_mutex_lock(&philo->fork);
+		printf("\e[1;34m[%d] Philo %d has taken a fork\n\e[0m", (int)(get_time() - philo->init_time), philo->index);
+		pthread_mutex_lock(&philo->right->fork);
+		printf("\e[1;34m[%d] Philo %d has taken a fork\n\e[0m", (int)(get_time() - philo->init_time), philo->index);
+		philo->last_eat = get_time();
+		printf("\e[1;32m[%d] Philo %d is eating\n\e[0m", (int)(get_time() - philo->init_time), philo->index);
+		usleep(philo->table->eat_time * 1000);
+		pthread_mutex_unlock(&philo->fork);
+		pthread_mutex_unlock(&philo->right->fork);
+		printf("\e[1;33m[%d] Philo %d is sleeping\n\e[0m", (int)(get_time() - philo->init_time), philo->index);
+		usleep(philo->table->sleep_time * 1000);
+		//printf("test table: %d\n", philo->table->philo_num);
+		//printf("test right: %d\n", philo->right->index);
+		//printf("test time %d: %d\n", philo->index, (int)philo->time);
+	}
+	if (philo->table->dead_philo == 1)
+	{
+		printf("\e[1;31m[%d] Philo %d is dead\n\e[0m", (int)(get_time() - philo->init_time), philo->index);
+	}
 	return (NULL);
 }
 
@@ -146,9 +171,17 @@ void	create_threads(t_table *vars)
 	{
 		pthread_create(&vars->philo[i].id, NULL, philo, &vars->philo[i]);
 	}
+	/*i = -1;
+	while (++i < vars->philo_num)
+	{
+		philo_is_dead(&vars->philo[i], vars->philo[i].table);
+	}*/
+	//bucle grande aqui en el que compruebo todos los filosofos a ver si han muerto
+	//o comprobarlo en el bucle infinito de arriba cada filosofo individualmente;
 	i = -1;
 	while (++i < vars->philo_num)
 	{
+		printf("test: %d\n", vars->dead_philo);
 		pthread_join(vars->philo[i].id, NULL);
 	}
 }
@@ -159,9 +192,9 @@ int	main(int argc, char **argv)
 	if (argc == 5 || argc == 6)
 	{
 		if (check_args(argv)) //check que no sean negativos;
-			fail(1);
+		fail(1);
 		mesa_init(argc, argv, &vars);
-		printf("test\nPhilonum: %d\nforknum: %d\ndietime: %d\neattime: %d\nsleeptime: %d\nitnum: %d\n", vars.philo_num, vars.fork_num, vars.die_time, vars.eat_time, vars.sleep_time, vars.it_num);
+		//printf("test\nPhilonum: %d\nforknum: %d\ndietime: %d\neattime: %d\nsleeptime: %d\nitnum: %d\n", vars.philo_num, vars.fork_num, vars.die_time, vars.eat_time, vars.sleep_time, vars.it_num);
 		create_threads(&vars);
 	}
 	else

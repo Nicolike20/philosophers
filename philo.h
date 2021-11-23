@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:32:02 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/22 18:04:52 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/23 17:10:49 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,8 @@ typedef struct s_philo
 	int				index;
 	pthread_mutex_t	fork;
 	size_t	init_time;
+	size_t	current_time;
+	size_t	last_eat;
 	struct s_philo	*right;
 	struct s_table	*table;
 }t_philo;
@@ -35,6 +37,7 @@ typedef struct s_table
 	int		die_time;
 	int		eat_time;
 	int		sleep_time;
+	int		dead_philo;
 	int		it_num;
 	t_philo	*philo;
 }t_table;
