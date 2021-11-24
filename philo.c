@@ -6,12 +6,16 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:31:28 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/24 13:13:58 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/24 14:39:16 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
+//TODO: un solo filo;
+//TODO: numero de iteraciones concreto;
+//TODO: intentar optimizarlo a full;
+//TODO: leaks?;
 void	fail(int i)
 {
 	if (i == 0)
@@ -99,7 +103,7 @@ void	philo_init(t_table *table)
 	table->philo[i - 1].right = &table->philo[0];
 }
 
-void	mesa_init(int argc, char **argv, t_table *table)
+void	table_init(int argc, char **argv, t_table *table)
 {
 	t_philo	*philo;
 
@@ -117,7 +121,26 @@ void	mesa_init(int argc, char **argv, t_table *table)
 	if (philo == NULL)
 		fail(0);
 	table->philo = philo;
+	pthread_mutex_init(&table->printf_mtx, NULL);
 	philo_init(table);
+}
+
+void	printf_status(t_philo *philo, int status)
+{
+	if (philo->table->dead_philo == 1)
+		return ;
+	pthread_mutex_lock(&philo->table->printf_mtx);
+	printf("\e[1;36m[%5d]", (int)(get_time() - philo->init_time));
+	printf("\e[1;35m Philo %2d", philo->index);
+	if (status == 0) //maybe quitar;
+		printf("\e[1;34m has taken a fork\e[0m\n");
+	if (status == 1) //maybe quitar;
+		printf("\e[1;32m is eating\e[0m\n");
+	if (status == 2) //maybe quitar;
+		printf("\e[1;33m is sleeping\e[0m\n");
+	if (status == 3) //maybe quitar esto;
+		printf("\e[1;31m is dead\e[0m\n");
+	pthread_mutex_unlock(&philo->table->printf_mtx);
 }
 
 void	bedtime(t_philo *philo, int check_es)
@@ -142,12 +165,15 @@ void	bedtime(t_philo *philo, int check_es)
 	}
 }
 
-void	philo_is_dead(t_philo *philo, t_table *table)
+int	philo_is_dead(t_philo *philo, t_table *table)
 {
 	if ((int)((get_time() - philo->init_time) - (philo->last_eat - philo->init_time)) > philo->table->die_time) //quitar los philo->init_time ?
 	{
+		printf_status(philo, 3);
 		table->dead_philo = 1;
+		return (1);
 	}
+	return (0);
 }
 
 void	*philo(void *philo_void)
@@ -160,20 +186,23 @@ void	*philo(void *philo_void)
 		if (philo->index % 2 != 0)
 			usleep(1000);
 		pthread_mutex_lock(&philo->fork);
-		if (philo->table->dead_philo == 0) //maybe quitar;
-			printf("\e[1;34m[%d] Philo %d has taken a fork\n\e[0m", (int)(get_time() - philo->init_time), philo->index);
+		printf_status(philo, 0);
+		// si solo hay uno se queda aqui :/
+		// if philo_num == 1 -> xd
+		if (philo->table->philo_num == 1)
+		{
+//			pthread_mutex_unlock(&philo->fork); //leaks por tener esto comentado??
+			break ;
+		}
 		pthread_mutex_lock(&philo->right->fork);
-		if (philo->table->dead_philo == 0) //maybe quitar;
-			printf("\e[1;34m[%d] Philo %d has taken a fork\n\e[0m", (int)(get_time() - philo->init_time), philo->index);
+		printf_status(philo, 0);
 		philo->last_eat = get_time();
-		if (philo->table->dead_philo == 0) //maybe quitar;
-			printf("\e[1;32m[%d] Philo %d is eating\n\e[0m", (int)(get_time() - philo->init_time), philo->index);
+		printf_status(philo, 1);
 		bedtime(philo, 0);
 		pthread_mutex_unlock(&philo->fork);
 		pthread_mutex_unlock(&philo->right->fork);
 		philo->last_sleep = get_time();
-		if (philo->table->dead_philo == 0) //maybe quitar;
-			printf("\e[1;33m[%d] Philo %d is sleeping\n\e[0m", (int)(get_time() - philo->init_time), philo->index);
+		printf_status(philo, 2);
 		bedtime(philo, 1);
 		//printf("test table: %d\n", philo->table->philo_num);
 		//printf("test right: %d\n", philo->right->index);
@@ -182,7 +211,6 @@ void	*philo(void *philo_void)
 	}
 	return (NULL);
 }
-//TODO: funcion con los prinf, mutex en la mesa para printf (lock al entrar, unlock al salir);
 void	create_threads(t_table *table)
 {
 	int	i;
@@ -190,23 +218,26 @@ void	create_threads(t_table *table)
 	i = -1;
 	while (++i < table->philo_num)
 		pthread_create(&table->philo[i].id, NULL, philo, &table->philo[i]);
-	while (table->dead_philo == 0)
+	while (1) // aqui pon lo de si han comido x veces
 	{
 		i = -1;
-		while (++i < table->philo_num && table->dead_philo == 0)
+		while (++i < table->philo_num)
 		{
-			philo_is_dead(&table->philo[i], table);
+			if (philo_is_dead(&table->philo[i], table))
+				break ;
 			usleep(100);
 		}
+		if (table->dead_philo == 1)
+			break ;
+		//while pa ver si han comido;
 	}
-	if (table->dead_philo == 1) //maybe quitar esto;
-		printf("\e[1;31m[%d] Philo %d is dead\n\e[0m", (int)(get_time() - table->philo[i - 1].init_time), table->philo[i - 1].index);
 	i = -1;
 	while (++i < table->philo_num)
 		pthread_join(table->philo[i].id, NULL);
 	i = -1;
 	while (++i < table->philo_num)
 		pthread_mutex_destroy(&table->philo[i].fork);
+	pthread_mutex_destroy(&table->printf_mtx);
 }
 
 int	main(int argc, char **argv)
@@ -216,7 +247,7 @@ int	main(int argc, char **argv)
 	{
 		if (check_args(argv)) //check que no sean negativos;
 		fail(1);
-		mesa_init(argc, argv, &table);
+		table_init(argc, argv, &table);
 		//printf("test\nPhilonum: %d\nforknum: %d\ndietime: %d\neattime: %d\nsleeptime: %d\nitnum: %d\n", vars.philo_num, vars.fork_num, vars.die_time, vars.eat_time, vars.sleep_time, vars.it_num);
 		create_threads(&table);
 	}
