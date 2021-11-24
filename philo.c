@@ -6,15 +6,18 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:31:28 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/24 14:39:16 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/24 18:58:36 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-//TODO: un solo filo;
-//TODO: numero de iteraciones concreto;
 //TODO: intentar optimizarlo a full;
+//TODO: print de thinking;
+//TODO: ponerlo bonito;
+//TODO: makefile;
+//TODO: check that a philosopher dies and its eating at the same time?
+//TODO: imprimir numero de veces que ha comido?;
 //TODO: leaks?;
 void	fail(int i)
 {
@@ -22,7 +25,6 @@ void	fail(int i)
 		write(2, "Error\n", 6);
 	if (i == 1)
 		write(2, "Invalid arguments\n", 18);
-	exit(2);
 }
 
 long	ft_atoi(const char *str)
@@ -113,10 +115,12 @@ void	table_init(int argc, char **argv, t_table *table)
 	table->eat_time = ft_atoi(argv[3]);
 	table->sleep_time = ft_atoi(argv[4]);
 	if (argc == 6)
-		table->it_num = ft_atoi(argv[5]);
+		table->it_num = ft_atoi(argv[5]) * table->philo_num;
 	else
 		table->it_num = -1;
 	table->dead_philo = 0;
+	table->times_eaten = 0;
+	table->it_max = 0;
 	philo = malloc(sizeof(t_philo) * table->philo_num);
 	if (philo == NULL)
 		fail(0);
@@ -135,11 +139,14 @@ void	printf_status(t_philo *philo, int status)
 	if (status == 0) //maybe quitar;
 		printf("\e[1;34m has taken a fork\e[0m\n");
 	if (status == 1) //maybe quitar;
-		printf("\e[1;32m is eating\e[0m\n");
+		printf("\e[1;32m is eating: %d\e[0m\n", philo->table->times_eaten);
 	if (status == 2) //maybe quitar;
 		printf("\e[1;33m is sleeping\e[0m\n");
 	if (status == 3) //maybe quitar esto;
+		printf("\e[1;95m is thinking\e[0m\n");
+	if (status == 4)
 		printf("\e[1;31m is dead\e[0m\n");
+
 	pthread_mutex_unlock(&philo->table->printf_mtx);
 }
 
@@ -167,9 +174,9 @@ void	bedtime(t_philo *philo, int check_es)
 
 int	philo_is_dead(t_philo *philo, t_table *table)
 {
-	if ((int)((get_time() - philo->init_time) - (philo->last_eat - philo->init_time)) > philo->table->die_time) //quitar los philo->init_time ?
+	if ((int)((get_time() - philo->init_time) - (philo->last_eat - philo->init_time)) > philo->table->die_time && table->it_max == 0) //quitar los philo->init_time ?
 	{
-		printf_status(philo, 3);
+		printf_status(philo, 4);
 		table->dead_philo = 1;
 		return (1);
 	}
@@ -181,7 +188,7 @@ void	*philo(void *philo_void)
 	t_philo	*philo;
 
 	philo = (t_philo *)philo_void;
-	while (philo->table->dead_philo == 0) //!philo_is_dead(philo, philo->table) //philo->table->dead_philo == 0
+	while (philo->table->dead_philo == 0 && (philo->table->it_num < 0 || philo->table->times_eaten < philo->table->it_num - 1))
 	{
 		if (philo->index % 2 != 0)
 			usleep(1000);
@@ -197,6 +204,7 @@ void	*philo(void *philo_void)
 		pthread_mutex_lock(&philo->right->fork);
 		printf_status(philo, 0);
 		philo->last_eat = get_time();
+		philo->table->times_eaten += 1;
 		printf_status(philo, 1);
 		bedtime(philo, 0);
 		pthread_mutex_unlock(&philo->fork);
@@ -204,6 +212,7 @@ void	*philo(void *philo_void)
 		philo->last_sleep = get_time();
 		printf_status(philo, 2);
 		bedtime(philo, 1);
+		printf_status(philo, 3);
 		//printf("test table: %d\n", philo->table->philo_num);
 		//printf("test right: %d\n", philo->right->index);
 		//printf("test time %d: %d\n", philo->index, (int)philo->time);
@@ -218,7 +227,7 @@ void	create_threads(t_table *table)
 	i = -1;
 	while (++i < table->philo_num)
 		pthread_create(&table->philo[i].id, NULL, philo, &table->philo[i]);
-	while (1) // aqui pon lo de si han comido x veces
+	while (table->it_max == 0) // aqui pon lo de si han comido x veces
 	{
 		i = -1;
 		while (++i < table->philo_num)
@@ -230,6 +239,18 @@ void	create_threads(t_table *table)
 		if (table->dead_philo == 1)
 			break ;
 		//while pa ver si han comido;
+		i = -1;
+		if (table->times_eaten == table->it_num)
+			table->it_max = 1;
+		/*while(++i < table->philo_num)
+		{
+			//printf("times_eaten: %d\n", table->philo[i].times_eaten);
+			//printf("it_num: %d\n", table->it_num);
+			if (table->times_eaten == table->it_num)
+				table->it_max = 1;
+		}*/
+		/*if (table->philo[i].times_eaten == table->it_num)
+			break ;*/
 	}
 	i = -1;
 	while (++i < table->philo_num)
@@ -240,18 +261,29 @@ void	create_threads(t_table *table)
 	pthread_mutex_destroy(&table->printf_mtx);
 }
 
+void	leaks(void)
+{
+	system("leaks -q a.out");
+}
+
 int	main(int argc, char **argv)
 {
 	t_table	table;
+
+	//atexit(leaks);
 	if (argc == 5 || argc == 6)
 	{
 		if (check_args(argv)) //check que no sean negativos;
-		fail(1);
+		{
+			fail(1);
+			return (0); //return 2?
+		}
 		table_init(argc, argv, &table);
 		//printf("test\nPhilonum: %d\nforknum: %d\ndietime: %d\neattime: %d\nsleeptime: %d\nitnum: %d\n", vars.philo_num, vars.fork_num, vars.die_time, vars.eat_time, vars.sleep_time, vars.it_num);
 		create_threads(&table);
+		free(table.philo);
 	}
 	else
-		fail(1);
+		fail(1); //return 2?;
 	return (0);
 }

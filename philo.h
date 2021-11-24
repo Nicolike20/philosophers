@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:32:02 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/24 14:18:19 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/24 18:10:56 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,8 @@ typedef struct s_table {
 	int				sleep_time;
 	int				dead_philo;
 	int				it_num;
+	int				times_eaten;
+	int				it_max;
 	pthread_mutex_t	printf_mtx;
 	t_philo			*philo;
 }	t_table;
