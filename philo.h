@@ -42,6 +42,8 @@ typedef struct s_table {
 	int				times_eaten;
 	int				it_max;
 	pthread_mutex_t	printf_mtx;
+	pthread_mutex_t	eat_mtx;
+	pthread_mutex_t	die_check_mtx;
 	t_philo			*philo;
 }	t_table;
 

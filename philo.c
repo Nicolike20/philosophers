@@ -13,10 +13,8 @@
 #include "philo.h"
 
 //TODO: intentar optimizarlo a full;
-//TODO: print de thinking;
-//TODO: ponerlo bonito;
+//TODO: maybe cambiar tenedor y spaguetis por palillos y ramen lol;
 //TODO: makefile;
-//TODO: check that a philosopher dies and its eating at the same time?
 //TODO: imprimir numero de veces que ha comido?;
 //TODO: leaks?;
 void	fail(int i)
@@ -125,29 +123,33 @@ void	table_init(int argc, char **argv, t_table *table)
 	if (philo == NULL)
 		fail(0);
 	table->philo = philo;
+	pthread_mutex_init(&table->eat_mtx, NULL);
 	pthread_mutex_init(&table->printf_mtx, NULL);
+	pthread_mutex_init(&table->die_check_mtx, NULL);
 	philo_init(table);
 }
 
 void	printf_status(t_philo *philo, int status)
 {
-	if (philo->table->dead_philo == 1)
-		return ;
 	pthread_mutex_lock(&philo->table->printf_mtx);
-	printf("\e[1;36m[%5d]", (int)(get_time() - philo->init_time));
-	printf("\e[1;35m Philo %2d", philo->index);
-	if (status == 0) //maybe quitar;
-		printf("\e[1;34m has taken a fork\e[0m\n");
-	if (status == 1) //maybe quitar;
-		printf("\e[1;32m is eating: %d\e[0m\n", philo->table->times_eaten);
-	if (status == 2) //maybe quitar;
-		printf("\e[1;33m is sleeping\e[0m\n");
-	if (status == 3) //maybe quitar esto;
-		printf("\e[1;95m is thinking\e[0m\n");
+	if (philo->table->dead_philo == 1)
+	{
+		pthread_mutex_unlock(&philo->table->printf_mtx);
+		return ;
+	}
+	printf("\e[2;36m[%5d]\e[0m", (int)(get_time() - philo->init_time));
+	if (status == 0)
+		printf("\e[1;93m\e[2;34m Philo\e[0m\e[1;93m %2d\e[2;34m has taken a fork 🍴\e[0m\n", philo->index);
+	if (status == 1)
+		printf("\e[1;32m Philo\e[1;33m %2d\e[1;32m is eating 食🍝: %d\e[0m\n", philo->index, philo->table->times_eaten);
+	if (status == 2)
+		printf("\e[1;36m Philo\e[1;33m %2d\e[1;36m is sleeping 寝😴\e[0m\n", philo->index);
+	if (status == 3)
+		printf("\e[1;35m Philo\e[1;33m %2d\e[1;35m is thinking 思🤔\e[0m\n", philo->index);
 	if (status == 4)
-		printf("\e[1;31m is dead\e[0m\n");
-
+		printf("\e[1;31m Philo\e[1;33m %2d\e[1;31m is dead 死💀\e[0m\n", philo->index);
 	pthread_mutex_unlock(&philo->table->printf_mtx);
+
 }
 
 void	bedtime(t_philo *philo, int check_es)
@@ -203,9 +205,11 @@ void	*philo(void *philo_void)
 		}
 		pthread_mutex_lock(&philo->right->fork);
 		printf_status(philo, 0);
+		pthread_mutex_lock(&philo->table->eat_mtx);
 		philo->last_eat = get_time();
 		philo->table->times_eaten += 1;
 		printf_status(philo, 1);
+		pthread_mutex_unlock(&philo->table->eat_mtx);
 		bedtime(philo, 0);
 		pthread_mutex_unlock(&philo->fork);
 		pthread_mutex_unlock(&philo->right->fork);
@@ -232,8 +236,10 @@ void	create_threads(t_table *table)
 		i = -1;
 		while (++i < table->philo_num)
 		{
+			pthread_mutex_lock(&table->die_check_mtx);
 			if (philo_is_dead(&table->philo[i], table))
 				break ;
+			pthread_mutex_unlock(&table->die_check_mtx);
 			usleep(100);
 		}
 		if (table->dead_philo == 1)
@@ -242,15 +248,6 @@ void	create_threads(t_table *table)
 		i = -1;
 		if (table->times_eaten == table->it_num)
 			table->it_max = 1;
-		/*while(++i < table->philo_num)
-		{
-			//printf("times_eaten: %d\n", table->philo[i].times_eaten);
-			//printf("it_num: %d\n", table->it_num);
-			if (table->times_eaten == table->it_num)
-				table->it_max = 1;
-		}*/
-		/*if (table->philo[i].times_eaten == table->it_num)
-			break ;*/
 	}
 	i = -1;
 	while (++i < table->philo_num)
@@ -259,6 +256,8 @@ void	create_threads(t_table *table)
 	while (++i < table->philo_num)
 		pthread_mutex_destroy(&table->philo[i].fork);
 	pthread_mutex_destroy(&table->printf_mtx);
+	pthread_mutex_destroy(&table->eat_mtx);
+	pthread_mutex_destroy(&table->die_check_mtx);
 }
 
 void	leaks(void)
