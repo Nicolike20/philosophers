@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:32:02 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/29 18:16:50 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/12/02 00:37:55 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,16 +20,16 @@
 # include <sys/time.h>
 
 typedef struct s_philo {
-	pthread_t		id;
-	int				index;
-	pthread_mutex_t	fork;
-	size_t			init_time;
-	size_t			current_time;
-	size_t			last_eat;
-	size_t			last_sleep;
-	struct s_philo	*right;
-	int				philo_times_eaten;
-	struct s_table	*table;
+	pthread_t				id;
+	int						index;
+	pthread_mutex_t			fork;
+	size_t					init_time;
+	size_t					current_time;
+	size_t					last_eat;
+	size_t					last_sleep;
+	struct s_philo			*right;
+	int						philo_times_eaten;
+	volatile struct s_table	*table;
 }	t_philo;
 
 typedef struct s_table {
@@ -39,6 +39,7 @@ typedef struct s_table {
 	int				eat_time;
 	int				sleep_time;
 	int				dead_philo;
+	int				single_it_num;
 	int				it_num;
 	int				total_times_eaten;
 	int				it_max;

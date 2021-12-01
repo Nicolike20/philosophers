@@ -6,14 +6,12 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 18:31:28 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/29 18:27:57 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/12/02 00:37:41 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-//TODO: ENTREGAR SIN README;
-//TODO: intentar optimizarlo a full;
 static void	bedtime(t_philo *philo, int check_es)
 {
 	if (check_es == 0)
@@ -42,12 +40,12 @@ static void	philo_aux(t_philo *philo)
 {
 	pthread_mutex_lock(&philo->right->fork);
 	printf_status(philo, 0);
-	pthread_mutex_lock(&philo->table->eat_mtx);
+	pthread_mutex_lock((pthread_mutex_t *)&philo->table->eat_mtx);
 	philo->last_eat = get_time();
 	philo->table->total_times_eaten += 1;
 	philo->philo_times_eaten += 1;
 	printf_status(philo, 1);
-	pthread_mutex_unlock(&philo->table->eat_mtx);
+	pthread_mutex_unlock((pthread_mutex_t *)&philo->table->eat_mtx);
 	bedtime(philo, 0);
 	pthread_mutex_unlock(&philo->fork);
 	pthread_mutex_unlock(&philo->right->fork);
@@ -62,8 +60,7 @@ static void	*philo(void *philo_void)
 	t_philo	*philo;
 
 	philo = (t_philo *)philo_void;
-	while (philo->table->dead_philo == 0 && (philo->table->it_num < 0
-			|| philo->table->total_times_eaten < philo->table->it_num - 1))
+	while (philo->table->dead_philo == 0 && philo->table->it_max == 0)
 	{
 		if (philo->index % 2 != 0)
 			usleep(1000);
@@ -101,7 +98,6 @@ void	create_threads(t_table *table)
 		create_threads_aux(table, i);
 		if (table->dead_philo == 1)
 			break ;
-		i = -1;
 		if (table->total_times_eaten == table->it_num)
 			table->it_max = 1;
 	}

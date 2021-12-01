@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/29 17:46:26 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/29 18:26:51 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/12/02 00:37:15 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,10 +55,10 @@ size_t	get_time(void)
 
 void	printf_status(t_philo *philo, int status)
 {
-	pthread_mutex_lock(&philo->table->printf_mtx);
-	if (philo->table->dead_philo == 1)
+	pthread_mutex_lock((pthread_mutex_t *)&philo->table->printf_mtx);
+	if (philo->table->dead_philo == 1 || philo->table->it_max == 1)
 	{
-		pthread_mutex_unlock(&philo->table->printf_mtx);
+		pthread_mutex_unlock((pthread_mutex_t *)&philo->table->printf_mtx);
 		return ;
 	}
 	printf("\e[2;36m[%5d]\e[0m", (int)(get_time() - philo->init_time));
@@ -77,7 +77,7 @@ void	printf_status(t_philo *philo, int status)
 	if (status == 4)
 		printf("\e[1;31m Philo\e[1;33m %2d\e[1;31m is dead 死💀\e[0m\n",
 			philo->index);
-	pthread_mutex_unlock(&philo->table->printf_mtx);
+	pthread_mutex_unlock((pthread_mutex_t *)&philo->table->printf_mtx);
 }
 
 int	philo_is_dead(t_philo *philo, t_table *table)

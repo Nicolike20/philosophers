@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/29 18:09:21 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/29 18:13:30 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/12/02 00:38:09 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,10 +40,12 @@ void	table_init(int argc, char **argv, t_table *table)
 	table->die_time = ft_atoi(argv[2]);
 	table->eat_time = ft_atoi(argv[3]);
 	table->sleep_time = ft_atoi(argv[4]);
+	table->it_num = -1;
 	if (argc == 6)
 		table->it_num = ft_atoi(argv[5]) * table->philo_num;
-	else
-		table->it_num = -1;
+	table->single_it_num = -1;
+	if (argc == 6)
+		table->single_it_num = ft_atoi(argv[5]);
 	table->dead_philo = 0;
 	table->total_times_eaten = 0;
 	table->it_max = 0;
