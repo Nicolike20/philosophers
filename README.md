@@ -82,7 +82,7 @@ The simulation must:
 
 ---
 
-## 🚀 Bonus Features (if implemented)
+## 🚀 Bonus Features
 
 ✅ Use of **processes** instead of threads (`philo_bonus`)  
 ✅ **Semaphores** for synchronization  
